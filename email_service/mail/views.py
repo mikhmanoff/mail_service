@@ -1,4 +1,6 @@
 # mail/views.py
+import imaplib
+import email
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect
 from django.views import View
@@ -52,3 +54,35 @@ class SendEmailFormView(View):
             messages.error(request, f'Error sending email: {str(e)}')
         
         return redirect('send-email-form')
+
+class FetchEmailsView(View):
+    def get(self, request):
+        try:
+            mail = imaplib.IMAP4_SSL('imap.gmail.com')
+            mail.login(os.getenv('EMAIL_HOST_USER'), os.getenv('EMAIL_HOST_PASSWORD'))
+            mail.select('inbox')
+
+            status, messages_list = mail.search(None, 'ALL')
+            email_ids = messages_list[0].split()
+
+            emails = []
+            for e_id in email_ids[-5:]:  # Fetch the last 5 emails
+                status, msg_data = mail.fetch(e_id, '(RFC822)')
+                for response_part in msg_data:
+                    if isinstance(response_part, tuple):
+                        msg = email.message_from_bytes(response_part[1])
+                        subject = msg['subject']
+                        from_ = msg['from']
+                        try:
+                            body = msg.get_payload(decode=True).decode()
+                        except AttributeError:
+                            body = "No content"
+                        emails.append({'from': from_, 'subject': subject, 'body': body})
+
+            mail.logout()
+        except Exception as e:
+            messages.error(request, f'Error fetching emails: {str(e)}')
+            emails = []
+
+        return render(request, 'incoming_emails.html', {'emails': emails})
+    
