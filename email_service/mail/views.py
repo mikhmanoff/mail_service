@@ -1,18 +1,18 @@
-from django.shortcuts import render
+# mail/views.py
 from django.core.mail import send_mail
+from django.shortcuts import render, redirect
+from django.views import View
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.contrib import messages
 from .serializers import EmailSerializer
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .utils import fetch_emails
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-class SendEmailView(APIView):
+class SendEmailApiView(APIView):
     def post(self, request):
         serializer = EmailSerializer(data=request.data)
         if serializer.is_valid():
@@ -29,9 +29,26 @@ class SendEmailView(APIView):
             )
             return Response({'status': 'Email sent successfully!'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
-class FetchEmailView(APIView):
+class SendEmailFormView(View):
     def get(self, request):
-        emails = fetch_emails()
-        return Response(emails, status=status.HTTP_200_OK)
+        return render(request, 'send_email.html')
+
+    def post(self, request):
+        to_email = request.POST.get('to_email')
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+        
+        try:
+            send_mail(
+                subject,
+                message,
+                os.getenv('EMAIL_HOST_USER'),  # From email
+                [to_email],
+                fail_silently=False,
+            )
+            messages.success(request, 'Email sent successfully!')
+        except Exception as e:
+            messages.error(request, f'Error sending email: {str(e)}')
+        
+        return redirect('send-email-form')

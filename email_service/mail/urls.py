@@ -1,7 +1,8 @@
+# mail/urls.py
 from django.urls import path
-from .views import SendEmailView, FetchEmailView
+from .views import SendEmailApiView, SendEmailFormView
 
 urlpatterns = [
-    path('send-email/', SendEmailView.as_view(), name='send-email'),
-    path('fetch-emails/', FetchEmailView.as_view(), name='fetch-emails'),
+    path('send-email-api/', SendEmailApiView.as_view(), name='send-email-api'),
+    path('send-email-form/', SendEmailFormView.as_view(), name='send-email-form'),
 ]
