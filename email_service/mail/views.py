@@ -7,6 +7,10 @@ from .serializers import EmailSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .utils import fetch_emails
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class SendEmailView(APIView):
     def post(self, request):
@@ -19,7 +23,7 @@ class SendEmailView(APIView):
             send_mail(
                 subject,
                 message,
-                'your_email@gmail.com',  # From email
+                os.getenv('EMAIL_HOST_USER'),  # From email
                 [to_email],
                 fail_silently=False,
             )
