@@ -6,28 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Incoming Emails</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 </head>
 <body>
-    <div class="container">
+    <div class="container my-4">
         <h1>Incoming Emails</h1>
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>From</th>
-                    <th>Subject</th>
-                    <th>Body</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for email in emails %}
-                <tr>
-                    <td>{{ email.from|safe }}</td>
-                    <td>{{ email.subject|safe }}</td>
-                    {{ email.body|safe }}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="accordion" id="emailAccordion">
+            {% for email in emails %}
+            <div class="card">
+                <div class="card-header" id="heading-{{ forloop.counter0 }}">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse-{{ forloop.counter0 }}" aria-expanded="false" aria-controls="collapse-{{ forloop.counter0 }}">
+                            <strong>From:</strong> {{ email.from|safe }} | <strong>Subject:</strong> {{ email.subject|safe }}
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapse-{{ forloop.counter0 }}" class="collapse" aria-labelledby="heading-{{ forloop.counter0 }}" data-parent="#emailAccordion">
+                    <div class="card-body">
+                        {{ email.body|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

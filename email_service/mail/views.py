@@ -13,9 +13,18 @@ import os
 from dotenv import load_dotenv
 from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
+from email.header import decode_header
 
 
 load_dotenv()
+
+# Функция для декодирования заголовков MIME
+def decode_mime_words(s):
+    decoded_fragments = decode_header(s)
+    return ''.join(
+        fragment.decode(encoding or 'utf-8') if isinstance(fragment, bytes) else fragment
+        for fragment, encoding in decoded_fragments
+    )
 
 class SendEmailApiView(APIView):
     def post(self, request):
@@ -75,17 +84,33 @@ class FetchEmailsView(View):
             email_ids = messages_list[0].split()
 
             emails = []
-            for e_id in email_ids[-5:]:  # Fetch the last 5 emails
+            for e_id in email_ids[-30:]:  # Извлечение последних 30 писем
                 status, msg_data = mail.fetch(e_id, '(RFC822)')
                 for response_part in msg_data:
                     if isinstance(response_part, tuple):
                         msg = email.message_from_bytes(response_part[1])
-                        subject = msg['subject']
-                        from_ = msg['from']
-                        try:
+                        subject = decode_mime_words(msg['subject'])
+                        from_ = decode_mime_words(msg['from'])
+
+                        # Обработка тела письма
+                        body = "No content"
+                        if msg.is_multipart():
+                            body_parts = []
+                            for part in msg.walk():
+                                content_type = part.get_content_type()
+                                content_disposition = str(part.get("Content-Disposition"))
+
+                                if content_type == "text/plain" and "attachment" not in content_disposition:
+                                    body_parts.append(part.get_payload(decode=True).decode())
+                                elif content_type == "text/html" and "attachment" not in content_disposition:
+                                    body_parts.append(part.get_payload(decode=True).decode())
+
+                            # Если есть HTML, используем его, иначе используем текстовую версию
+                            body = "".join([part for part in body_parts if "html" in part.lower()]) or \
+                                   "".join(body_parts)
+                        else:
                             body = msg.get_payload(decode=True).decode()
-                        except AttributeError:
-                            body = "No content"
+
                         emails.append({'from': from_, 'subject': subject, 'body': body})
 
             mail.logout()
