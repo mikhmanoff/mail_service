@@ -39,7 +39,7 @@
         
         // Update hidden textarea on form submit
         $('form').on('submit', function() {
-            $('#message').val(quill.root.innerHTML);
+            $('#message').val(quill.root.innerHTML); // Use quill.root.innerHTML to get HTML content
         });
         
         {% if messages %}

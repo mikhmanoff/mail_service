@@ -21,8 +21,8 @@
             <tbody>
                 {% for email in emails %}
                 <tr>
-                    <td>{{ email.from }}</td>
-                    <td>{{ email.subject }}</td>
+                    <td>{{ email.from|safe }}</td>
+                    <td>{{ email.subject|safe }}</td>
                     {{ email.body|safe }}
                 </tr>
                 {% endfor %}

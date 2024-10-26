@@ -1,7 +1,7 @@
 # mail/views.py
 import imaplib
 import email
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import render, redirect
 from django.views import View
 from rest_framework.views import APIView
@@ -11,6 +11,9 @@ from django.contrib import messages
 from .serializers import EmailSerializer
 import os
 from dotenv import load_dotenv
+from django.core.mail import EmailMultiAlternatives
+from django.utils.html import strip_tags
+
 
 load_dotenv()
 
@@ -22,37 +25,43 @@ class SendEmailApiView(APIView):
             subject = serializer.validated_data['subject']
             message = serializer.validated_data['message']
             
-            send_mail(
-                subject,
-                message,
-                os.getenv('EMAIL_HOST_USER'),  # From email
-                [to_email],
-                fail_silently=False,
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body='This is the plain text version of the email',  # Add a plain text fallback version
+                from_email=os.getenv('EMAIL_HOST_USER'),
+                to=[to_email],
             )
+            email.attach_alternative(message, "text/html")
+            email.send()
+
             return Response({'status': 'Email sent successfully!'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SendEmailFormView(View):
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
+        # Обработка GET-запроса для отображения формы
         return render(request, 'send_email.html')
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         to_email = request.POST.get('to_email')
         subject = request.POST.get('subject')
-        message = request.POST.get('message')
-        
+        message = request.POST.get('message')  # Это уже HTML-содержимое
+
         try:
-            send_mail(
-                subject,
-                message,
-                os.getenv('EMAIL_HOST_USER'),  # From email
-                [to_email],
-                fail_silently=False,
+            # Создание email с HTML и plain text версиями
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=strip_tags(message),  # Текстовая версия (без HTML)
+                from_email=os.getenv('EMAIL_HOST_USER'),
+                to=[to_email]
             )
+            email.attach_alternative(message, "text/html")  # HTML-версия
+            email.send()
+
             messages.success(request, 'Email sent successfully!')
         except Exception as e:
             messages.error(request, f'Error sending email: {str(e)}')
-        
+
         return redirect('send-email-form')
 
 class FetchEmailsView(View):
@@ -85,4 +94,3 @@ class FetchEmailsView(View):
             emails = []
 
         return render(request, 'incoming_emails.html', {'emails': emails})
-    
