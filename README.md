@@ -1,7 +1,7 @@
 
 # Email Service Project
 
-<iframe width="560" height="315" src="https://skrinshoter.ru/vSOCoeKV1op" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[Watch the video](https://skrinshoter.ru/vSOCoeKV1op)
 
 
 This project is a Django-based web application that allows users to send and receive emails using Gmail's IMAP and SMTP protocols. The project includes features such as:
